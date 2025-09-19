@@ -10,11 +10,11 @@ import seaborn as sns
 import os
 
 
-def load_history(parquet_files_path: str):
+def load_history(dataset):
 
     # Loading ----------------
-    file_path = os.path.join(parquet_files_path, 'associados_enriquecido.parquet')
-    dataset = pl.read_parquet(file_path)
+    #file_path = os.path.join(parquet_files_path, 'associados_enriquecido.parquet')
+    #dataset = pl.read_parquet(file_path)
 
     # Transforming negative values into 0's
     dataset = dataset.with_columns([
@@ -52,6 +52,11 @@ def load_history(parquet_files_path: str):
         pl.col("semana").dt.year().alias("ano"),
     ])
 
-    df_final = df_features.drop_nulls()
+    #df_features = df_features.with_columns(
+    #    pl.when(pl.col("vendas_semanais") > 0).then(pl.col("semana_do_ano")).otherwise(-1).forward_fill().over(["pdv", "sku"]).alias("ultima_semana_com_venda")
+    #)
+
+    df_final = df_features
+    #df_final = df_features.drop_nulls()
 
     return df_final, df_features

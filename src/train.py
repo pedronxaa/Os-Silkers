@@ -1,12 +1,17 @@
 import pandas as pd
 import polars as pl
+import numpy as np
 import lightgbm as lgb
 from wmape import eval_wmape
 from final_changes import adapt_input
 
-def train(df_final):
+def train(df_final:pl.DataFrame):
 
     df_final = adapt_input(df_final)
+
+    df_final = df_final.to_pandas()
+    df_final = df_final.replace([np.nan], [0])
+    df_final = pl.from_pandas(df_final)
 
     # --- Define target and features ---
     COLUNAS_DROP = ["semana", "vendas_semanais"]

@@ -9,19 +9,19 @@ import numpy as np
 # input features: vendas_lag_1, ..., vendas_lag_4, media_movel_4_semanas, desvio_padrao_4_semanas,
 # semana_do_ano, mes, ano, pdv_encoded, sku_encoded
 
-def predict(day, month, year, model, save_path='.', num_weeks=5):
+def predict(day, month, year, model, history_dataset, save_path='.', num_weeks=5):
     """
         Returns a dataframe of predictions for the next num_weeks, starting from day-month-year.
     """
 
-    df, original_df = load_history('/home/guilherme/code/python/OsSilkers/data/parquet')
+    original_df = history_dataset
     # Step 1: Get Lag Dates ==========================================================
 
     # Extra data
     #date_to_predict= date(year=2023, month=1, day=2)
     initial_date_to_predict = datetime(year=year, month=month, day=day)
 
-    df = df.to_pandas()
+    #df = df.to_pandas()
     original_df = original_df.to_pandas()
 
     # Step 1: Get lag dates ==========================================================
@@ -105,7 +105,7 @@ def predict(day, month, year, model, save_path='.', num_weeks=5):
 
         # Replace null values
 
-        to_predict_df = to_predict_df.replace([pd.NA, np.nan], [-1, -1])
+        to_predict_df = to_predict_df.replace([pd.NA, np.nan], [0, 0])
 
         # Sort values
         to_predict_df = to_predict_df.sort_values(by=['semana'])
@@ -118,6 +118,8 @@ def predict(day, month, year, model, save_path='.', num_weeks=5):
         to_predict_df = pl.from_pandas(to_predict_df)
 
         to_predict_df = adapt_input(to_predict_df)
+
+        to_predict_df = to_predict_df.sort(by=['semana'])
 
         # Drop the column we want to predict ("vendas_semanais") and "semana", which is not part of the input
         to_predict_df = to_predict_df.drop(['semana', 'vendas_semanais'])
@@ -139,6 +141,8 @@ def predict(day, month, year, model, save_path='.', num_weeks=5):
             'vendas_semanais': 'quantidade',
             'sku': 'produto'
         }, axis='columns').sort_values(by=['semana'])[concat_df['semana'] == date_to_predict][to_predict_columns]
+
+        predicted_values_df['semana'] = week_i + 1
 
         prediction_results_list.append(predicted_values_df)
         print(f'End of predictions for {date_to_predict}')
